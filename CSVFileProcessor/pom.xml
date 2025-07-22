@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.s3fileprocesslambdalayer</groupId>
+    <artifactId>csv-file-processor-function</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>CSVProcessorFunction</name>
+    <description>Lambda function to process CSV files using shared S3 utilities layer</description>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <aws.lambda.java.core.version>1.2.3</aws.lambda.java.core.version>
+        <aws.lambda.java.events.version>3.11.0</aws.lambda.java.events.version>
+    </properties>
+
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-common</artifactId>
+                <version>4.1.114.Final</version> <!-- Or latest non-vulnerable -->
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>4.1.114.Final</version>
+            </dependency>
+            <!-- Add more overrides if needed (check using mvn dependency:tree) -->
+        </dependencies>
+    </dependencyManagement>
+
+
+
+    <dependencies>
+        <!-- AWS Lambda Core (RequestHandler, Context) -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-core</artifactId>
+            <version>${aws.lambda.java.core.version}</version>
+        </dependency>
+
+        <!-- AWS Lambda Events (S3Event, etc.) -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-events</artifactId>
+            <version>${aws.lambda.java.events.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.25.22</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Shared Lambda Layer (contains S3 SDK, utility methods) -->
+        <dependency>
+            <groupId>com.s3fileprocesslambdalayer</groupId>
+            <artifactId>shared-lambda-layer</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope> <!-- Don't bundle, layer provides it -->
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Java compiler plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+
+            <!-- Shade plugin to create the final Lambda JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.2</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>${project.artifactId}</finalName>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.s3fileprocesslambdalayer.CSVFileProcessor</mainClass>
+                                </transformer>
+                            </transformers>
+                            <!-- Optional: Rename AWS SDK package to avoid conflicts -->
+                            <relocations>
+                                <relocation>
+                                    <pattern>software.amazon.awssdk</pattern>
+                                    <shadedPattern>com.shaded.awssdk</shadedPattern>
+                                </relocation>
+                            </relocations>
+
+                            <!-- Optional: Clean up JAR size -->
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/LICENSE*</exclude>
+                                        <exclude>META-INF/NOTICE*</exclude>
+                                        <exclude>META-INF/DEPENDENCIES</exclude>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+
+                            <!-- Exclude internal Lambda Layer module (if applicable) -->
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>com.s3fileprocesslambdalayer:shared-lambda-layer</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

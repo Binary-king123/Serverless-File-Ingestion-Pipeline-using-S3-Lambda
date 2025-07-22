@@ -1,33 +1,12 @@
- 📁 Serverless S3 File Processor using AWS Lambda Layer & AWS SAM
+# Serverless S3 File Processor using Shared Lambda layer and AWS SAM
 
-[![AWS](https://img.shields.io/badge/Built%20with-AWS-orange?logo=amazon-aws)](https://aws.amazon.com/)
-[![Language](https://img.shields.io/badge/Language-Java%2017-blue?logo=java)](https://www.oracle.com/java/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> A production-ready, serverless solution for processing multi-format files uploaded to Amazon S3 using AWS Lambda (Java 17), Lambda Layers, and AWS SAM.
+In modern cloud-native applications, handling diverse file types uploaded to Amazon S3 is a common requirement — especially in data pipelines, content ingestion systems, and document automation workflows. However, building such a solution in a scalable, modular, and maintainable way can be challenging due to code duplication, event handling complexities, and deployment pitfalls like circular dependencies.
 
----
-
-## 🚀 Overview
-
-In modern cloud-native applications, automatic handling of file uploads (e.g., CSVs, PDFs, Images) to **Amazon S3** is a common requirement for:
-
-- Data ingestion pipelines  
-- Content/media processing systems  
-- Document automation workflows  
-
-This project provides a **modular, scalable, and event-driven** architecture to process uploaded files using **dedicated Lambda functions**. Common file operations are abstracted into a **shared Lambda Layer**, while **deployment automation** is achieved using **AWS SAM** and a custom resource Lambda.
+This project addresses that challenge by implementing a **serverless, multi-format file processing framework** using **Lambda Layer**, **AWS Lambda using Java 17**, and **AWS SAM**. It is designed to automatically detect and process different file types — such as **CSV**, **PDF**, and **Images** — uploaded to an S3 bucket using a clean, layered architecture.
 
 ---
 
-## 🎯 Key Objectives
-
-- **Modular Processing**: Separate Lambda functions for CSV, PDF, and image handling.
-- **Code Reusability**: Shared Lambda Layer for common S3 download, `/tmp` caching, and cleanup logic.
-- **Clean Deployment**: Dynamically configure S3 → Lambda notifications using a custom Lambda to avoid CloudFormation circular dependencies.
-- **Scalability & Maintainability**: Designed as a reusable template for real-world, enterprise-ready file processing systems.
-
----
 ## Purpose of the Project
 
 The core goals of this project are:

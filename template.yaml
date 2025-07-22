@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Runtime: java17
+    Timeout: 60
+    MemorySize: 512
+    Architectures:
+      - x86_64
+
+Resources:
+
+  S3FileBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "file-processor-s3-bkt"
+      VersioningConfiguration:
+        Status: Enabled
+
+  SharedFileHandlerLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: shared-file-handler-java
+      Description: Common logic for downloading to /tmp
+      ContentUri: SharedFileProcessingLambdaLayer/layer
+      CompatibleRuntimes:
+        - java17
+      RetentionPolicy: Retain
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+        - PolicyName: AllowLambdaPermissionForCustomResource
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:AddPermission
+                  - lambda:InvokeFunction
+                  - s3:GetBucketNotification
+                  - s3:PutBucketNotification
+                Resource: "*"
+
+  CSVProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: CSVFileProcessor/
+      Handler: com.s3fileprocesslambdalayer.CSVFileProcessor::handleRequest
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Layers:
+        - !Ref SharedFileHandlerLayer
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref S3FileBucket
+
+  PDFProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: PDFFileProcessor/
+      Handler: com.s3fileprocesslambdalayer.PDFFileProcessor::handleRequest
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Layers:
+        - !Ref SharedFileHandlerLayer
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref S3FileBucket
+
+  ImageProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ImageFileProcessor/
+      Handler: com.s3fileprocesslambdalayer.ImageFileProcessor::handleRequest
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Layers:
+        - !Ref SharedFileHandlerLayer
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref S3FileBucket
+
+  S3NotificationConfiguratorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: S3NotificationConfigurator/
+      Handler: com.s3fileprocesslambdalayer.S3NotificationConfigurator::handleRequest
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref S3FileBucket
+          CSV_PROCESSOR_ARN: !GetAtt CSVProcessorFunction.Arn
+          PDF_PROCESSOR_ARN: !GetAtt PDFProcessorFunction.Arn
+          IMAGE_PROCESSOR_ARN: !GetAtt ImageProcessorFunction.Arn
+
+  ConfigureBucketNotificationCustomResource:
+    Type: Custom::ConfigureS3Notification
+    DependsOn:
+      - CSVProcessorFunction
+      - PDFProcessorFunction
+      - ImageProcessorFunction
+      - S3FileBucket
+    Properties:
+      ServiceToken: !GetAtt S3NotificationConfiguratorFunction.Arn
+      BucketName: !Ref S3FileBucket
+      CSVProcessorArn: !GetAtt CSVProcessorFunction.Arn
+      PDFProcessorArn: !GetAtt PDFProcessorFunction.Arn
+      ImageProcessorArn: !GetAtt ImageProcessorFunction.Arn
+      ForceUpdateToken: !Sub "${AWS::StackName}-${AWS::StackId}"
+
+Outputs:
+  S3BucketName:
+    Value: !Ref S3FileBucket
+
+  CSVProcessorFunction:
+    Value: !GetAtt CSVProcessorFunction.Arn
+
+  PDFProcessorFunction:
+    Value: !GetAtt PDFProcessorFunction.Arn
+
+  ImageProcessorFunction:
+    Value: !GetAtt ImageProcessorFunction.Arn
+
+  NotificationConfigurator:
+    Value: !GetAtt S3NotificationConfiguratorFunction.Arn

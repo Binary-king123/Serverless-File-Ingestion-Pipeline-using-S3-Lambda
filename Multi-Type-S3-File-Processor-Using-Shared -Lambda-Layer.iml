@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="AdditionalModuleElements">
+    <content url="file://$MODULE_DIR$" dumb="true">
+      <excludeFolder url="file://$MODULE_DIR$/.aws-sam" />
+    </content>
+  </component>
+  <component name="syncSettings">
+    <option name="samConfigs">
+      <map>
+        <entry key="bucket-stack\template.yaml">
+          <value>
+            <SyncSamConfig>
+              <option name="bucketName" value="poc-bucket-pbkn" />
+              <option name="enabledCapabilities">
+                <list>
+                  <option value="NAMED_IAM" />
+                  <option value="AUTO_EXPAND" />
+                  <option value="IAM" />
+                </list>
+              </option>
+              <option name="stackName" value="multi-type-s3-bucket-stack" />
+              <option name="tags">
+                <map />
+              </option>
+              <option name="tempParameterOverrides">
+                <map />
+              </option>
+            </SyncSamConfig>
+          </value>
+        </entry>
+        <entry key="processor-stack\template.yaml">
+          <value>
+            <SyncSamConfig>
+              <option name="bucketName" value="poc-bucket-pbkn" />
+              <option name="enabledCapabilities">
+                <list>
+                  <option value="NAMED_IAM" />
+                  <option value="AUTO_EXPAND" />
+                  <option value="IAM" />
+                </list>
+              </option>
+              <option name="stackName" value="shared-lambda-layer-for-multi-type-s3-file-processor" />
+              <option name="tags">
+                <map />
+              </option>
+              <option name="tempParameterOverrides">
+                <map />
+              </option>
+            </SyncSamConfig>
+          </value>
+        </entry>
+        <entry key="template.yaml">
+          <value>
+            <SyncSamConfig>
+              <option name="bucketName" value="poc-bucket-pbkn" />
+              <option name="enabledCapabilities">
+                <list>
+                  <option value="NAMED_IAM" />
+                  <option value="AUTO_EXPAND" />
+                  <option value="IAM" />
+                </list>
+              </option>
+              <option name="stackName" value="multi-type-s3-file-processor-using-shared-lambda-layer" />
+              <option name="tags">
+                <map />
+              </option>
+              <option name="tempParameterOverrides">
+                <map />
+              </option>
+            </SyncSamConfig>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</module>
